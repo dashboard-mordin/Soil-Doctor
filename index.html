@@ -16,10 +16,7 @@
 
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Sarabun', sans-serif; }
-        
-        /* พื้นหลังหน้าเว็บหลัก สีเทาอมเขียวอ่อนๆ ตามภาพอ้างอิง */
         body { background-color: #e9ece8; color: #1a1a1a; overflow: hidden; height: 100vh; width: 100vw; }
-        
         .layout-wrapper { display: flex; height: 100vh; width: 100vw; }
 
         /* --- Sidebar --- */
@@ -54,16 +51,9 @@
         .kpi-title { font-size: 16px; font-weight: 600; color: #4b5563; margin-bottom: 10px; display: flex; align-items: center; gap: 8px; position: relative; z-index: 2; }
         .kpi-value { font-size: 40px; font-weight: 700; color: #1f2937; line-height: 1; position: relative; z-index: 2; }
 
-        /* --- กล่องแผนที่ กราฟ ตาราง (อัปเดตสีพื้นหลังใหม่ให้เหมือนภาพ) --- */
         .map-container, .chart-card, .table-responsive { 
-            background-color: #f4f7f5; /* สีสว่าง สะอาดตา มินิมอล */
-            border-radius: 12px; 
-            padding: 25px; 
-            box-shadow: 0 2px 8px rgba(0,0,0,0.04); 
-            position: relative; 
-            overflow: hidden; 
-            transition: all 0.3s; 
-            border: 1px solid #e0e5e0; /* ขอบสีอ่อนละมุน */
+            background-color: #f4f7f5; border-radius: 12px; padding: 25px; box-shadow: 0 2px 8px rgba(0,0,0,0.04); 
+            position: relative; overflow: hidden; transition: all 0.3s; border: 1px solid #e0e5e0; 
         }
         .map-container:hover, .chart-card:hover, .table-responsive:hover { box-shadow: 0 8px 20px rgba(0,0,0,0.06); }
         
@@ -181,7 +171,7 @@
                     <tr><th>คำนำหน้า</th><th>ชื่อจริง</th><th>นามสกุล</th><th>หมู่บ้าน</th><th>ตำบล</th><th>อำเภอ</th><th>จังหวัด</th><th>พืชที่ปลูก</th><th>พื้นที่ (ตร.ว.)</th><th>บัตรดินดี</th><th>มด.หมู่บ้าน</th><th>มด.ตำบล</th><th>มด.อำเภอ</th><th>มด.จังหวัด</th></tr>
                 </thead>
                 <tbody id="tableBody">
-                    <tr><td colspan="14" class="loading-text"><i class="fa-solid fa-spinner fa-spin"></i> กำลังโหลดข้อมูลจาก Google Sheet...</td></tr>
+                    <tr><td colspan="14" class="loading-text"><i class="fa-solid fa-spinner fa-spin"></i> กำลังดึงข้อมูล... โค้ดใหม่จะโหลดเร็วกว่าเดิมครับ</td></tr>
                 </tbody>
             </table>
         </section>
@@ -189,7 +179,7 @@
 </div>
 
 <script>
-    // URL Web App
+    // 🚨 ใส่ลิงก์ Web App ใหม่ ที่ผ่านการแก้โค้ด Google Apps Script แล้ว ตรงนี้นะครับ
     const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwV3vGNWNQa48-R26q9KYAzhaLSesiLio_MoUUEuEqNcbJR1gXHXu18SHhneZdTYgL80A/exec";
     
     let allMasterData = [];
@@ -243,195 +233,106 @@
         return formatValue(val);
     };
 
-    function normalizeData(rawData) {
-        return rawData.filter(item => item != null).map(item => {
-            const getV = (...possibleKeys) => {
-                for (let k of possibleKeys) {
-                    if (item[k] !== undefined && item[k] !== null) return String(item[k]).trim();
-                    for (let itemKey of Object.keys(item)) {
-                        if (String(itemKey).includes(k)) return String(item[itemKey]).trim();
-                    }
-                }
-                return "";
-            };
-            return {
-                prefix: getV("prefix", "คำนำหน้า"),
-                fname: getV("fname", "ชื่อจริง", "ชื่อ"),
-                lname: getV("lname", "นามสกุล"),
-                village: getV("village", "หมู่บ้าน"),
-                subdistrict: getV("subdistrict", "ตำบล"),
-                district: getV("district", "อำเภอ"),
-                province: getV("province", "จังหวัด", "สพด").replace(/^จังหวัด/, '').trim(),
-                crop: getV("crop", "พืช"),
-                area: getV("area", "พื้นที่"),
-                card: getV("card", "บัตรดินดี"),
-                v0: getV("v0", "มด.หมู่บ้าน", "ประจำหมู่บ้าน"),
-                v1: getV("v1", "มด.ตำบล", "ประจำตำบล"),
-                v2: getV("v2", "มด.อำเภอ", "ประจำอำเภอ"),
-                v3: getV("v3", "มด.จังหวัด", "ประจำจังหวัด")
-            };
-        });
-    }
-
     function drawCropBarChart(data) {
-        try {
-            if (!isGoogleChartsReady || typeof google === 'undefined' || !google.visualization || data.length === 0) return;
-            
-            let cropCounts = {};
-            let explicitOthers = 0;
+        if (!isGoogleChartsReady || typeof google === 'undefined' || !google.visualization || data.length === 0) return;
+        
+        let cropCounts = {};
+        let explicitOthers = 0;
 
-            data.forEach(item => {
-                let cropName = String(item.crop || "").trim();
-                if (cropName === "อื่น ๆ" || cropName === "อื่นๆ" || cropName === "อื่น") {
-                    explicitOthers++;
-                } else if (cropName !== "" && cropName !== "-" && cropName !== "null" && cropName !== "undefined") {
-                    cropCounts[cropName] = (cropCounts[cropName] || 0) + 1;
-                }
-            });
-            
-            let sortedCrops = Object.entries(cropCounts).sort((a, b) => b[1] - a[1]);
-            let displayCrops = sortedCrops.slice(0, 5);
-            let othersCount = explicitOthers + sortedCrops.slice(5).reduce((sum, item) => sum + item[1], 0);
-            
-            if (othersCount > 0) {
-                displayCrops.push(['อื่นๆ', othersCount]);
+        data.forEach(item => {
+            let cropName = String(item.crop || "").trim();
+            if (cropName === "อื่น ๆ" || cropName === "อื่นๆ" || cropName === "อื่น") {
+                explicitOthers++;
+            } else if (cropName !== "" && cropName !== "-" && cropName !== "null" && cropName !== "undefined") {
+                cropCounts[cropName] = (cropCounts[cropName] || 0) + 1;
             }
+        });
+        
+        let sortedCrops = Object.entries(cropCounts).sort((a, b) => b[1] - a[1]);
+        let displayCrops = sortedCrops.slice(0, 5);
+        let othersCount = explicitOthers + sortedCrops.slice(5).reduce((sum, item) => sum + item[1], 0);
+        
+        if (othersCount > 0) displayCrops.push(['อื่นๆ', othersCount]);
 
-            let dataArray = [['พืชที่ปลูก', 'จำนวนราย (คน)', { role: 'style' }]];
-            const barColors = ['#1cc88a', '#3b82f6', '#8b5cf6', '#fbbf24', '#f97316']; 
-            const othersColor = '#8fa396'; 
-            
-            displayCrops.forEach((c, index) => {
-                let color = (c[0] === 'อื่นๆ') ? othersColor : barColors[index % barColors.length];
-                dataArray.push([c[0], c[1], color]);
-            });
-            
-            if (dataArray.length <= 1) {
-                document.getElementById('cropBarChart').innerHTML = "<div style='text-align:center; padding-top:100px; color:#999;'>ไม่พบข้อมูลพืชที่ปลูก</div>";
-                return;
-            }
-            var dataTable = google.visualization.arrayToDataTable(dataArray);
-            var options = { chartArea: { width: '65%', height: '85%' }, hAxis: { minValue: 0, textStyle: { fontName: 'Sarabun', fontSize: 12 } }, vAxis: { textStyle: { fontName: 'Sarabun', fontSize: 13, bold: true } }, legend: { position: 'none' }, backgroundColor: 'transparent', animation: { startup: true, duration: 800, easing: 'out' } };
-            var chart = new google.visualization.BarChart(document.getElementById('cropBarChart'));
-            chart.draw(dataTable, options);
-        } catch (error) { console.warn("ข้ามการวาดกราฟแท่งเนื่องจากพบข้อผิดพลาด:", error); }
+        let dataArray = [['พืชที่ปลูก', 'จำนวนราย (คน)', { role: 'style' }]];
+        const barColors = ['#1cc88a', '#3b82f6', '#8b5cf6', '#fbbf24', '#f97316']; 
+        const othersColor = '#8fa396'; 
+        
+        displayCrops.forEach((c, index) => {
+            let color = (c[0] === 'อื่นๆ') ? othersColor : barColors[index % barColors.length];
+            dataArray.push([c[0], c[1], color]);
+        });
+        
+        if (dataArray.length <= 1) {
+            document.getElementById('cropBarChart').innerHTML = "<div style='text-align:center; padding-top:100px; color:#999;'>ไม่พบข้อมูลพืชที่ปลูก</div>";
+            return;
+        }
+        var dataTable = google.visualization.arrayToDataTable(dataArray);
+        var options = { chartArea: { width: '65%', height: '85%' }, hAxis: { minValue: 0, textStyle: { fontName: 'Sarabun', fontSize: 12 } }, vAxis: { textStyle: { fontName: 'Sarabun', fontSize: 13, bold: true } }, legend: { position: 'none' }, backgroundColor: 'transparent', animation: { startup: true, duration: 800, easing: 'out' } };
+        var chart = new google.visualization.BarChart(document.getElementById('cropBarChart'));
+        chart.draw(dataTable, options);
     }
 
     function drawMapChart(data) {
-        try {
-            if (!isGoogleChartsReady || typeof google === 'undefined' || !google.visualization || data.length === 0) return;
-            $('#mapPlaceholder').hide();
+        if (!isGoogleChartsReady || typeof google === 'undefined' || !google.visualization || data.length === 0) return;
+        $('#mapPlaceholder').hide();
+        
+        let statsByProvince = {};
+        data.forEach(item => {
+            let provName = String(item.province || "");
+            if(provName === 'กรุงเทพมหานครฯ' || provName === 'กทม') provName = 'กรุงเทพมหานคร';
             
-            let statsByProvince = {};
-            data.forEach(item => {
-                let provName = String(item.province || "").replace(/^จังหวัด/, '').trim();
-                if(provName === 'กรุงเทพมหานครฯ' || provName === 'กทม') provName = 'กรุงเทพมหานคร';
-                
-                if (provName !== "" && provName !== "-" && provinceCodes[provName]) {
-                    if (!statsByProvince[provName]) {
-                        statsByProvince[provName] = { total: 0, v0: 0, v1: 0, v2: 0, v3: 0, crops: {} };
-                    }
-                    statsByProvince[provName].total++;
-                    
-                    if (item.v0 === "1" || item.v0 === "1.0") statsByProvince[provName].v0++;
-                    if (item.v1 === "1" || item.v1 === "1.0") statsByProvince[provName].v1++;
-                    if (item.v2 === "1" || item.v2 === "1.0") statsByProvince[provName].v2++;
-                    if (item.v3 === "1" || item.v3 === "1.0") statsByProvince[provName].v3++;
-                    
-                    if (item.crop && item.crop !== "-") {
-                        statsByProvince[provName].crops[item.crop] = (statsByProvince[provName].crops[item.crop] || 0) + 1;
-                    }
-                }
-            });
-            
-            let mapDataArray = [['Province', 'จำนวนราย (คน)', { type: 'string', role: 'tooltip', p: { html: true } }]];
-            for (const [prov, s] of Object.entries(statsByProvince)) {
-                let topCrop = "-"; let max = 0;
-                for (let c in s.crops) { if (s.crops[c] > max) { max = s.crops[c]; topCrop = c; } }
-
-                let tooltipHtml = `
-                    <div style="padding: 15px; min-width: 230px; font-family: 'Sarabun', sans-serif;">
-                        <h4 style="margin: 0 0 12px 0; color: #1b4332; font-size: 17px; border-bottom: 2px solid #e5e7eb; padding-bottom: 8px;">${prov}</h4>
-                        <div style="display: flex; justify-content: space-between; margin-bottom: 6px; font-size: 14px;">
-                            <span style="color: #64748b;">รายชื่อทั้งหมด</span><strong>${s.total.toLocaleString()}</strong>
-                        </div>
-                        <div style="display: flex; justify-content: space-between; margin-bottom: 6px; font-size: 14px;">
-                            <span style="color: #64748b;">ประจำหมู่บ้าน</span><strong>${s.v0.toLocaleString()}</strong>
-                        </div>
-                        <div style="display: flex; justify-content: space-between; margin-bottom: 6px; font-size: 14px;">
-                            <span style="color: #64748b;">ประจำตำบล</span><strong>${s.v1.toLocaleString()}</strong>
-                        </div>
-                        <div style="display: flex; justify-content: space-between; margin-bottom: 6px; font-size: 14px;">
-                            <span style="color: #64748b;">ประจำอำเภอ</span><strong>${s.v2.toLocaleString()}</strong>
-                        </div>
-                        <div style="display: flex; justify-content: space-between; margin-bottom: 6px; font-size: 14px;">
-                            <span style="color: #64748b;">ประจำจังหวัด</span><strong>${s.v3.toLocaleString()}</strong>
-                        </div>
-                        <div style="display: flex; justify-content: space-between; margin-top: 10px; padding-top: 10px; border-top: 1px dashed #cbd5e1; font-size: 14px;">
-                            <span style="color: #64748b;">พืชเด่น</span><strong style="color: #059669; text-align: right; max-width: 130px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${topCrop}</strong>
-                        </div>
-                    </div>
-                `;
-                mapDataArray.push([{ v: provinceCodes[prov], f: prov }, s.total, tooltipHtml]);
+            if (provName !== "" && provinceCodes[provName]) {
+                if (!statsByProvince[provName]) statsByProvince[provName] = { total: 0, v0: 0, v1: 0, v2: 0, v3: 0, crops: {} };
+                statsByProvince[provName].total++;
+                if (item.v0 === "1" || item.v0 === "1.0") statsByProvince[provName].v0++;
+                if (item.v1 === "1" || item.v1 === "1.0") statsByProvince[provName].v1++;
+                if (item.v2 === "1" || item.v2 === "1.0") statsByProvince[provName].v2++;
+                if (item.v3 === "1" || item.v3 === "1.0") statsByProvince[provName].v3++;
+                if (item.crop && item.crop !== "-") statsByProvince[provName].crops[item.crop] = (statsByProvince[provName].crops[item.crop] || 0) + 1;
             }
-            if (mapDataArray.length <= 1) return;
-            var dataTable = google.visualization.arrayToDataTable(mapDataArray);
-            var options = { 
-                region: 'TH', 
-                resolution: 'provinces', 
-                colorAxis: { colors: ['#cce3d8', '#1b4332'] }, 
-                backgroundColor: 'transparent', 
-                datalessRegionColor: '#f4f1ea', 
-                tooltip: { isHtml: true } 
-            };
-            var chart = new google.visualization.GeoChart(document.getElementById('regions_div'));
-            chart.draw(dataTable, options);
-        } catch (error) { console.warn("ข้ามการวาดแผนที่:", error); }
+        });
+        
+        let mapDataArray = [['Province', 'จำนวนราย (คน)', { type: 'string', role: 'tooltip', p: { html: true } }]];
+        for (const [prov, s] of Object.entries(statsByProvince)) {
+            let topCrop = "-"; let max = 0;
+            for (let c in s.crops) { if (s.crops[c] > max) { max = s.crops[c]; topCrop = c; } }
+            let tooltipHtml = `<div style="padding: 15px; min-width: 230px; font-family: 'Sarabun', sans-serif;"><h4 style="margin: 0 0 12px 0; color: #1b4332; font-size: 17px; border-bottom: 2px solid #e5e7eb; padding-bottom: 8px;">${prov}</h4><div style="display: flex; justify-content: space-between; margin-bottom: 6px; font-size: 14px;"><span style="color: #64748b;">รายชื่อทั้งหมด</span><strong>${s.total.toLocaleString()}</strong></div><div style="display: flex; justify-content: space-between; margin-bottom: 6px; font-size: 14px;"><span style="color: #64748b;">ประจำหมู่บ้าน</span><strong>${s.v0.toLocaleString()}</strong></div><div style="display: flex; justify-content: space-between; margin-bottom: 6px; font-size: 14px;"><span style="color: #64748b;">ประจำตำบล</span><strong>${s.v1.toLocaleString()}</strong></div><div style="display: flex; justify-content: space-between; margin-bottom: 6px; font-size: 14px;"><span style="color: #64748b;">ประจำอำเภอ</span><strong>${s.v2.toLocaleString()}</strong></div><div style="display: flex; justify-content: space-between; margin-bottom: 6px; font-size: 14px;"><span style="color: #64748b;">ประจำจังหวัด</span><strong>${s.v3.toLocaleString()}</strong></div><div style="display: flex; justify-content: space-between; margin-top: 10px; padding-top: 10px; border-top: 1px dashed #cbd5e1; font-size: 14px;"><span style="color: #64748b;">พืชเด่น</span><strong style="color: #059669; text-align: right; max-width: 130px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${topCrop}</strong></div></div>`;
+            mapDataArray.push([{ v: provinceCodes[prov], f: prov }, s.total, tooltipHtml]);
+        }
+        if (mapDataArray.length <= 1) return;
+        var dataTable = google.visualization.arrayToDataTable(mapDataArray);
+        var options = { region: 'TH', resolution: 'provinces', colorAxis: { colors: ['#cce3d8', '#1b4332'] }, backgroundColor: 'transparent', datalessRegionColor: '#f4f1ea', tooltip: { isHtml: true } };
+        var chart = new google.visualization.GeoChart(document.getElementById('regions_div'));
+        chart.draw(dataTable, options);
     }
 
     function updateChartsAndKPIs(data) {
-        try {
-            if (!data || data.length === 0) return;
-            let male = 0, female = 0, other = 0;
-            let hasCard = 0, noCard = 0, unspecified = 0;
+        if (!data || data.length === 0) return;
+        let male = 0, female = 0, other = 0, hasCard = 0, noCard = 0, unspecified = 0;
 
-            data.forEach(item => {
-                const prefix = String(item.prefix || "").trim();
-                if (prefix === "นาย" || prefix.includes("เด็กชาย")) male++;
-                else if (prefix === "นาง" || prefix === "นางสาว" || prefix.includes("น.ส.")) female++;
-                else other++;
+        data.forEach(item => {
+            const prefix = String(item.prefix || "").trim();
+            if (prefix === "นาย" || prefix.includes("เด็กชาย")) male++;
+            else if (prefix === "นาง" || prefix === "นางสาว" || prefix.includes("น.ส.")) female++;
+            else other++;
 
-                let cardVal = item.card;
-                if (cardVal === null || cardVal === undefined) {
-                    unspecified++;
-                } else {
-                    let cleanVal = String(cardVal).trim();
-                    if (cleanVal === "" || cleanVal === "-") unspecified++;
-                    else if (cleanVal === "0" || cleanVal === "0.0") noCard++;
-                    else if (cleanVal === "1" || cleanVal === "1.0" || parseFloat(cleanVal) > 0) hasCard++;
-                    else unspecified++;
-                }
-            });
-            $('#kpiTotal').text(data.length.toLocaleString());
-            $('#kpiMale').text(male.toLocaleString());
-            $('#kpiFemale').text(female.toLocaleString());
-            $('#kpiSection').fadeIn();
-            
-            renderCircleChart("genderPie", [
-                { label: 'ชาย', count: male, color: '#3b82f6' },
-                { label: 'หญิง', count: female, color: '#ec4899' },
-                { label: 'อื่นๆ', count: other, color: '#dad7cd' }
-            ], "genderLegend");
+            let cardVal = item.card;
+            if (cardVal === null || cardVal === undefined || cardVal === "" || cardVal === "-") unspecified++;
+            else if (cardVal === "0" || cardVal === "0.0") noCard++;
+            else hasCard++;
+        });
 
-            renderCircleChart("cardDoughnut", [
-                { label: 'มีบัตร', count: hasCard, color: '#f97316' },
-                { label: 'ไม่มีบัตร', count: noCard, color: '#c44536' },
-                { label: 'ไม่ระบุ', count: unspecified, color: '#d1d5db' }
-            ], "cardLegend");
-            
-            drawCropBarChart(data);
-            $('#dashboardSection').fadeIn();
-        } catch (error) { console.warn("เกิดข้อผิดพลาดตอนอัปเดตกราฟ/KPI:", error); }
+        $('#kpiTotal').text(data.length.toLocaleString());
+        $('#kpiMale').text(male.toLocaleString());
+        $('#kpiFemale').text(female.toLocaleString());
+        $('#kpiSection').fadeIn();
+        
+        renderCircleChart("genderPie", [{ label: 'ชาย', count: male, color: '#3b82f6' }, { label: 'หญิง', count: female, color: '#ec4899' }, { label: 'อื่นๆ', count: other, color: '#dad7cd' }], "genderLegend");
+        renderCircleChart("cardDoughnut", [{ label: 'มีบัตร', count: hasCard, color: '#f97316' }, { label: 'ไม่มีบัตร', count: noCard, color: '#c44536' }, { label: 'ไม่ระบุ', count: unspecified, color: '#d1d5db' }], "cardLegend");
+        
+        drawCropBarChart(data);
+        $('#dashboardSection').fadeIn();
     }
 
     function renderCircleChart(elementId, dataset, legendId) {
@@ -450,45 +351,49 @@
         element.style.background = `conic-gradient(${gradientParts.join(', ')})`;
     }
 
+    // 🚀 พระเอกของความเร็ว: การสร้างตารางแบบจำกัดจำนวน + String DOM 🚀
     function renderTable(dataToRender) {
-        try {
-            const tbody = $('#tableBody');
-            const thead = $('#tableHeader');
-            tbody.empty();
-            if (!dataToRender || dataToRender.length === 0) {
-                thead.hide();
-                tbody.append(`<tr><td colspan="14" class="no-data-text" style="padding: 20px; text-align: center;">ไม่พบข้อมูลที่ค้นหา</td></tr>`);
-                updateChartsAndKPIs([]);
-                return;
-            }
-            thead.show();
-            const MAX_ROWS = 100;
-            const limitedData = dataToRender.slice(0, MAX_ROWS);
+        const tbody = $('#tableBody');
+        const thead = $('#tableHeader');
+        
+        if (!dataToRender || dataToRender.length === 0) {
+            thead.hide();
+            tbody.html(`<tr><td colspan="14" class="no-data-text" style="padding: 20px; text-align: center;">ไม่พบข้อมูลที่ค้นหา</td></tr>`);
+            updateChartsAndKPIs([]);
+            return;
+        }
+        thead.show();
+        
+        // 🚨 จำกัดการโชว์ผลบนตารางแค่ 200 รายการ เพื่อไม่ให้เว็บค้าง
+        const MAX_ROWS = 200; 
+        const limitedData = dataToRender.slice(0, MAX_ROWS);
 
-            limitedData.forEach((item) => {
-                const row = `<tr>
-                    <td>${formatValue(item.prefix)}</td>
-                    <td>${formatValue(item.fname)}</td>
-                    <td>${formatValue(item.lname)}</td>
-                    <td>${formatValue(item.village)}</td>
-                    <td>${formatValue(item.subdistrict)}</td>
-                    <td>${formatValue(item.district)}</td>
-                    <td>${formatValue(item.province)}</td>
-                    <td>${formatValue(item.crop)}</td>
-                    <td>${formatValue(item.area)}</td>
-                    <td>${formatValue(item.card)}</td>
-                    <td>${formatVolunteerStatus(item.v0)}</td>
-                    <td>${formatVolunteerStatus(item.v1)}</td>
-                    <td>${formatVolunteerStatus(item.v2)}</td>
-                    <td>${formatVolunteerStatus(item.v3)}</td>
-                </tr>`;
-                tbody.append(row);
-            });
-            if (dataToRender.length > MAX_ROWS) {
-                tbody.append(`<tr><td colspan="14" style="text-align:center; color:#b91c1c; font-weight:600; padding:15px; background-color:#fef2f2;">แสดงผลเพียง ${MAX_ROWS} รายการแรกจากทั้งหมด ${dataToRender.length.toLocaleString()} ราย (กรุณาใช้ตัวกรองเพื่อดูข้อมูลเจาะจง)</td></tr>`);
-            }
-            updateChartsAndKPIs(dataToRender);
-        } catch (error) { console.warn("ตารางมีปัญหา:", error); throw error; }
+        let rowsHtml = '';
+        limitedData.forEach((item) => {
+            rowsHtml += `<tr>
+                <td>${formatValue(item.prefix)}</td>
+                <td>${formatValue(item.fname)}</td>
+                <td>${formatValue(item.lname)}</td>
+                <td>${formatValue(item.village)}</td>
+                <td>${formatValue(item.subdistrict)}</td>
+                <td>${formatValue(item.district)}</td>
+                <td>${formatValue(item.province)}</td>
+                <td>${formatValue(item.crop)}</td>
+                <td>${formatValue(item.area)}</td>
+                <td>${formatValue(item.card)}</td>
+                <td>${formatVolunteerStatus(item.v0)}</td>
+                <td>${formatVolunteerStatus(item.v1)}</td>
+                <td>${formatVolunteerStatus(item.v2)}</td>
+                <td>${formatVolunteerStatus(item.v3)}</td>
+            </tr>`;
+        });
+        
+        if (dataToRender.length > MAX_ROWS) {
+            rowsHtml += `<tr><td colspan="14" style="text-align:center; color:#1b4332; font-weight:600; padding:15px; background-color:#e8f5e9;">แสดงผลเพียง ${MAX_ROWS} รายการแรกจากทั้งหมด ${dataToRender.length.toLocaleString()} ราย (กรุณาใช้ตัวกรองเพื่อดูข้อมูลเจาะจง หรือดาวน์โหลด Excel)</td></tr>`;
+        }
+        
+        tbody.html(rowsHtml);
+        updateChartsAndKPIs(dataToRender);
     }
 
     function filterTableData() {
@@ -519,24 +424,21 @@
         drawMapChart(filtered); 
     }
 
+    // ข้อมูลจาก GAS ทำความสะอาดและ Mapping คีย์มาแล้ว โหลดเข้าตัวแปรตรงๆ ได้เลย ไม่ต้องแปลง
     async function loadDataSafely() {
         const tbody = $('#tableBody');
         try {
             const response = await fetch(WEB_APP_URL);
             if (!response.ok) throw new Error(`HTTP Error: ${response.status}`);
             const textData = await response.text();
+            if (textData.includes("<!DOCTYPE html>") || textData.includes("<html")) throw new Error("SERVER_OVERLOAD");
             
-            if (textData.includes("<!DOCTYPE html>") || textData.includes("<html")) {
-                throw new Error("SERVER_OVERLOAD");
-            }
             const data = JSON.parse(textData);
-            
             if (Array.isArray(data) && data.length > 0) {
-                allMasterData = normalizeData(data);
+                allMasterData = data; 
                 currentFilteredData = allMasterData;
-                
-                try { renderTable(allMasterData); } catch(e) { console.error(e); }
-                try { if(isGoogleChartsReady) { drawMapChart(allMasterData); drawCropBarChart(allMasterData); } } catch(e) { console.error(e); }
+                renderTable(allMasterData);
+                if(isGoogleChartsReady) { drawMapChart(allMasterData); drawCropBarChart(allMasterData); }
             } else {
                 throw new Error("ไม่พบข้อมูล หรือรูปแบบข้อมูลไม่ถูกต้อง");
             }
@@ -544,10 +446,15 @@
             console.error("Fetch Error:", error);
             let errorMsg = "เกิดข้อผิดพลาดในการดึงข้อมูลจาก Google Sheet!";
             if (error.message === "SERVER_OVERLOAD") errorMsg = "ข้อมูลมีขนาดใหญ่เกินไป ทำให้เซิร์ฟเวอร์ประมวลผลไม่ทัน ลองรีเฟรชหน้าเว็บอีกครั้งครับ";
-            else if (error.name === "SyntaxError") errorMsg = "ข้อมูลที่ได้รับกลับมาไม่ใช่ JSON โปรดตรวจสอบลิงก์ Web App";
             tbody.html(`<tr><td colspan="14" style="color:#dc2626; text-align:center; padding:30px;"><i class="fa-solid fa-triangle-exclamation"></i> <b>${errorMsg}</b><br><small style="color:#6b7280;">รายละเอียดทางเทคนิค: ${error.message}</small></td></tr>`);
         }
     }
+
+    let typingTimer;
+    $('#searchName').on('input', function() { 
+        clearTimeout(typingTimer); 
+        typingTimer = setTimeout(filterTableData, 400); 
+    });
 
     $(document).ready(function() {
         $('.searchable-dropdown').select2({ width: '100%' });
@@ -565,13 +472,24 @@
         });
         
         $('#filterProvince').on('change', filterTableData);
-        $('#searchName').on('input', function() { clearTimeout(searchTimeout); searchTimeout = setTimeout(filterTableData, 400); });
-        
         loadDataSafely();
     });
 
     function clearFilter() { $('#filterRegion, #filterProvince').val('').trigger('change'); $('#searchName').val(''); filterTableData(); }
-    function downloadExcel() { alert("ระบบกำลังเตรียมไฟล์ Excel..."); }
+    
+    // โหลดข้อมูลดิบออกมาเป็นไฟล์ CSV อย่างรวดเร็ว
+    function downloadExcel() { 
+        if (currentFilteredData.length === 0) return alert("ไม่มีข้อมูลให้ดาวน์โหลด");
+        let csv = "\ufeffคำนำหน้า,ชื่อจริง,นามสกุล,หมู่บ้าน,ตำบล,อำเภอ,จังหวัด,พืชที่ปลูก,พื้นที่,บัตรดินดี,มด.หมู่บ้าน,มด.ตำบล,มด.อำเภอ,มด.จังหวัด\n";
+        currentFilteredData.forEach(row => {
+            csv += `"${row.prefix || ''}","${row.fname || ''}","${row.lname || ''}","${row.village || ''}","${row.subdistrict || ''}","${row.district || ''}","${row.province || ''}","${row.crop || ''}","${row.area || ''}","${row.card || ''}","${row.v0 || ''}","${row.v1 || ''}","${row.v2 || ''}","${row.v3 || ''}"\n`;
+        });
+        const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+        const link = document.createElement("a");
+        link.href = URL.createObjectURL(blob);
+        link.download = `ฐานข้อมูลหมอดินอาสา_${new Date().toLocaleDateString('th-TH').replace(/\//g, '-')}.csv`;
+        link.click();
+    }
 </script>
 </body>
 </html>
