@@ -16,6 +16,7 @@
 
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Sarabun', sans-serif; }
+        
         body { background-color: #e9ece8; color: #1a1a1a; overflow: hidden; height: 100vh; width: 100vw; }
         .layout-wrapper { display: flex; height: 100vh; width: 100vw; }
 
@@ -51,11 +52,11 @@
         .kpi-title { font-size: 16px; font-weight: 600; color: #4b5563; margin-bottom: 10px; display: flex; align-items: center; gap: 8px; position: relative; z-index: 2; }
         .kpi-value { font-size: 40px; font-weight: 700; color: #1f2937; line-height: 1; position: relative; z-index: 2; }
 
-        .map-container, .chart-card, .table-responsive { 
+        .map-container, .chart-card { 
             background-color: #f4f7f5; border-radius: 12px; padding: 25px; box-shadow: 0 2px 8px rgba(0,0,0,0.04); 
             position: relative; overflow: hidden; transition: all 0.3s; border: 1px solid #e0e5e0; 
         }
-        .map-container:hover, .chart-card:hover, .table-responsive:hover { box-shadow: 0 8px 20px rgba(0,0,0,0.06); }
+        .map-container:hover, .chart-card:hover { box-shadow: 0 8px 20px rgba(0,0,0,0.06); }
         
         .map-container { margin-bottom: 25px; width: 100%; }
         .map-header { position: relative; z-index: 2; display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 15px; flex-wrap: wrap; gap: 15px; }
@@ -72,13 +73,72 @@
         .chart-legend li { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; font-size: 14px; color: #4b5563; }
         .dot { width: 12px; height: 12px; border-radius: 3px; box-shadow: 0 1px 3px rgba(0,0,0,0.2); }
         
-        .table-responsive { margin-bottom: 40px; }
+        /* 🛠️ พื้นที่แสดงผลตาราง: จำกัดความสูงเพื่อเลื่อนแนวตั้ง และเปิดแถบเลื่อนแนวนอน */
+        .table-responsive { 
+            margin-bottom: 40px; 
+            max-height: 520px; 
+            overflow-y: auto; 
+            overflow-x: auto; 
+            background-color: #f4f7f5; 
+            border-radius: 12px; 
+            padding: 25px; 
+            box-shadow: 0 2px 8px rgba(0,0,0,0.04); 
+            border: 1px solid #e0e5e0; 
+        }
         .section-title { font-size: 20px; font-weight: 700; color: #1b4332; margin-bottom: 20px; display: flex; align-items: center; gap: 10px; border-bottom: 1px solid #dcdfdc; padding-bottom: 15px; position: relative; z-index: 2; }
-        table { width: 100%; border-collapse: collapse; font-size: 14px; min-width: 1500px; position: relative; z-index: 2; background-color: transparent; }
-        th { background-color: #e6ebe6; color: #2d6a4f; padding: 15px 10px; font-weight: 700; text-align: center; border-bottom: 2px solid #dcdfdc; white-space: nowrap; }
-        td { padding: 12px 10px; border-bottom: 1px solid #ecefec; text-align: center; white-space: nowrap; }
+        
+        /* 🚀 ล็อกโครงสร้างตารางไม่ให้ดิ้นด้วย table-layout: fixed */
+        table { 
+            width: 100%; 
+            border-collapse: collapse; 
+            font-size: 14px; 
+            min-width: 1600px; 
+            background-color: transparent; 
+            table-layout: fixed; 
+        }
+        
+        /* 🛠️ ล็อกแถวหัวข้อบนสุด (Sticky Header) */
+        th { 
+            background-color: #e6ebe6; 
+            color: #2d6a4f; 
+            padding: 15px 10px; 
+            font-weight: 700; 
+            text-align: center; 
+            border-bottom: 2px solid #dcdfdc; 
+            white-space: nowrap; 
+            position: sticky; 
+            top: 0; 
+            z-index: 10; 
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+
+        td { 
+            padding: 12px 10px; 
+            border-bottom: 1px solid #ecefec; 
+            text-align: center; 
+            white-space: nowrap; 
+            overflow: hidden; 
+            text-overflow: ellipsis; /* ตัดคำยาวเกินให้เป็นจุดไข่ปลา (...) แทนการดันคอลัมน์ขยาย */
+        }
+
         tr:hover td { background-color: #ffffff; }
         .loading-text { font-size: 18px; color: #6b7280; padding: 60px; text-align: center; }
+
+        /* 🚀 ล็อกความกว้างตายตัวให้แต่ละคอลัมน์ (ครบ 14 คอลัมน์) */
+        th:nth-child(1) { width: 80px; }   /* คำนำหน้า */
+        th:nth-child(2) { width: 140px; }  /* ชื่อจริง */
+        th:nth-child(3) { width: 140px; }  /* นามสกุล */
+        th:nth-child(4) { width: 160px; }  /* หมู่บ้าน */
+        th:nth-child(5) { width: 120px; }  /* ตำบล */
+        th:nth-child(6) { width: 120px; }  /* อำเภอ */
+        th:nth-child(7) { width: 120px; }  /* จังหวัด */
+        th:nth-child(8) { width: 150px; }  /* พืชที่ปลูก */
+        th:nth-child(9) { width: 100px; }  /* พื้นที่ */
+        th:nth-child(10) { width: 90px; }  /* บัตรดินดี */
+        th:nth-child(11) { width: 95px; }  /* มด.หมู่บ้าน */
+        th:nth-child(12) { width: 95px; }  /* มด.ตำบล */
+        th:nth-child(13) { width: 95px; }  /* มด.อำเภอ */
+        th:nth-child(14) { width: 95px; }  /* มด.จังหวัด */
 
         @media (max-width: 1300px) { .dashboard-row { grid-template-columns: 1fr; } }
     </style>
@@ -93,15 +153,21 @@
         </div>
         <div class="sidebar-filters">
             <div class="filter-group">
-                <span class="filter-label"><i class="fa-solid fa-map"></i> ภูมิภาค:</span>
-                <select class="searchable-dropdown" id="filterRegion">
-                    <option value="">-- ทุกภูมิภาค --</option>
-                    <option value="กลาง">ภาคกลาง</option>
-                    <option value="ตะวันตก">ภาคตะวันตก</option>
-                    <option value="ตะวันออก">ภาคตะวันออก</option>
-                    <option value="ตะวันออกเฉียงเหนือ">ภาคตะวันออกเฉียงเหนือ</option>
-                    <option value="เหนือ">ภาคเหนือ</option>
-                    <option value="ใต้">ภาคใต้</option>
+                <span class="filter-label"><i class="fa-solid fa-building"></i> สังกัด สพข.:</span>
+                <select class="searchable-dropdown" id="filterSpk">
+                    <option value="">-- ทุกหน่วยงาน (สพข.) --</option>
+                    <option value="1">สพข.1</option>
+                    <option value="2">สพข.2</option>
+                    <option value="3">สพข.3</option>
+                    <option value="4">สพข.4</option>
+                    <option value="5">สพข.5</option>
+                    <option value="6">สพข.6</option>
+                    <option value="7">สพข.7</option>
+                    <option value="8">สพข.8</option>
+                    <option value="9">สพข.9</option>
+                    <option value="10">สพข.10</option>
+                    <option value="11">สพข.11</option>
+                    <option value="12">สพข.12</option>
                 </select>
             </div>
             <div class="filter-group">
@@ -139,7 +205,7 @@
             <div class="map-header">
                 <div>
                     <div style="font-size: 20px; font-weight: 700; color: #1b4332; margin-bottom: 5px;"><i class="fa-solid fa-map-location-dot"></i> แผนที่ความหนาแน่นเชิงพื้นที่ (Farmers Density Map)</div>
-                    <div style="font-size: 13px; color: #64748b;" id="map-subtitle">จำนวนรายชื่อทั้งหมด | ทุกภูมิภาค | ทุกจังหวัด</div>
+                    <div style="font-size: 13px; color: #64748b;" id="map-subtitle">จำนวนรายชื่อทั้งหมด | ทุกหน่วยงาน (สพข.) | ทุกจังหวัด</div>
                 </div>
             </div>
             <div class="map-box" id="regions_div">
@@ -179,12 +245,11 @@
 </div>
 
 <script>
-    // 🚨 ใส่ลิงก์ Web App ใหม่ ที่ผ่านการแก้โค้ด Google Apps Script แล้ว ตรงนี้นะครับ
+    // 🚨 ใส่ลิงก์ Web App ตรงนี้
     const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwV3vGNWNQa48-R26q9KYAzhaLSesiLio_MoUUEuEqNcbJR1gXHXu18SHhneZdTYgL80A/exec";
     
     let allMasterData = [];
     let currentFilteredData = [];
-    let searchTimeout;
     let isGoogleChartsReady = false;
 
     const provinceCodes = {
@@ -206,13 +271,20 @@
         "อุทัยธานี": "TH-61", "อุบลราชธานี": "TH-34"
     };
 
-    const regionMapping = {
-        "กลาง": ["กรุงเทพมหานคร", "กำแพงเพชร", "ชัยนาท", "นครนายก", "นครปฐม", "นครสวรรค์", "นนทบุรี", "ปทุมธานี", "พระนครศรีอยุธยา", "พิจิตร", "พิษณุโลก", "เพชรบูรณ์", "ลพบุรี", "สมุทรปราการ", "สมุทรสงคราม", "สมุทรสาคร", "สระบุรี", "สิงห์บุรี", "สุโขทัย", "สุพรรณบุรี", "อ่างทอง", "อุทัยธานี"],
-        "ตะวันตก": ["กาญจนบุรี", "ตาก", "ประจวบคีรีขันธ์", "เพชรบุรี", "ราชบุรี"],
-        "ตะวันออก": ["จันทบุรี", "ฉะเชิงเทรา", "ชลบุรี", "ตราด", "ปราจีนบุรี", "ระยอง", "สระแก้ว"],
-        "ตะวันออกเฉียงเหนือ": ["กาฬสินธุ์", "ขอนแก่น", "ชัยภูมิ", "นครพนม", "นครราชสีมา", "บึงกาฬ", "บุรีรัมย์", "มหาสารคาม", "มุกดาหาร", "ยโสธร", "ร้อยเอ็ด", "เลย", "ศรีสะเกษ", "สกลนคร", "สุรินทร์", "หนองคาย", "หนองบัวลำภู", "อำนาจเจริญ", "อุดรธานี", "อุบลราชธานี"],
-        "เหนือ": ["เชียงราย", "เชียงใหม่", "น่าน", "พะเยา", "แพร่", "แม่ฮ่องสอน", "ลำปาง", "ลำพูน", "อุตรดิตถ์"],
-        "ใต้": ["กระบี่", "ชุมพร", "ตรัง", "นครศรีธรรมราช", "นราธิวาส", "ปัตตานี", "พังงา", "พัทลุง", "ภูเก็ต", "ยะลา", "ระนอง", "สงขลา", "สตูล", "สุราษฎร์ธานี"]
+    // 🚀 อัปเดตข้อมูลโครงสร้างการ Mapping ของ สพข.
+    const spkMapping = {
+        "1": ["ชัยนาท", "นครนายก", "นนทบุรี", "ปทุมธานี", "ลพบุรี", "สุพรรณบุรี", "พระนครศรีอยุธยา", "อ่างทอง", "สิงห์บุรี", "สระบุรี", "นครปฐม", "สมุทรปราการ", "กรุงเทพมหานคร"],
+        "2": ["จันทบุรี", "ฉะเชิงเทรา", "ชลบุรี", "ตราด", "ระยอง", "สระแก้ว", "ปราจีนบุรี"],
+        "3": ["ชัยภูมิ", "นครราชสีมา", "บุรีรัมย์", "สุรินทร์"],
+        "4": ["นครพนม", "อำนาจเจริญ", "อุบลราชธานี", "ร้อยเอ็ด", "ศรีสะเกษ", "มุกดาหาร", "ยโสธร"],
+        "5": ["ขอนแก่น", "อุดรธานี", "มหาสารคาม", "หนองคาย", "หนองบัวลำภู", "กาฬสินธุ์", "สกลนคร", "บึงกาฬ"],
+        "6": ["เชียงใหม่", "แม่ฮ่องสอน", "ลำพูน", "ลำปาง"],
+        "7": ["น่าน", "เชียงราย", "แพร่", "พะเยา"],
+        "8": ["พิษณุโลก", "อุตรดิตถ์", "เพชรบูรณ์", "เลย", "พิจิตร"],
+        "9": ["นครสวรรค์", "ตาก", "กำแพงเพชร", "อุทัยธานี", "สุโขทัย"],
+        "10": ["ราชบุรี", "กาญจนบุรี", "เพชรบุรี", "สมุทรสาคร", "สมุทรสงคราม", "ประจวบคีรีขันธ์"],
+        "11": ["สุราษฎร์ธานี", "ระนอง", "พังงา", "นครศรีธรรมราช", "ชุมพร", "กระบี่", "ภูเก็ต"],
+        "12": ["สงขลา", "สตูล", "ปัตตานี", "ยะลา", "พัทลุง", "นราธิวาส", "ตรัง"]
     };
 
     google.charts.load('current', { 'packages': ['geochart', 'corechart'] });
@@ -351,61 +423,60 @@
         element.style.background = `conic-gradient(${gradientParts.join(', ')})`;
     }
 
-    // 🚀 พระเอกของความเร็ว: การสร้างตารางแบบจำกัดจำนวน + String DOM 🚀
     function renderTable(dataToRender) {
-        const tbody = $('#tableBody');
-        const thead = $('#tableHeader');
-        
-        if (!dataToRender || dataToRender.length === 0) {
-            thead.hide();
-            tbody.html(`<tr><td colspan="14" class="no-data-text" style="padding: 20px; text-align: center;">ไม่พบข้อมูลที่ค้นหา</td></tr>`);
-            updateChartsAndKPIs([]);
-            return;
-        }
-        thead.show();
-        
-        // 🚨 จำกัดการโชว์ผลบนตารางแค่ 200 รายการ เพื่อไม่ให้เว็บค้าง
-        const MAX_ROWS = 200; 
-        const limitedData = dataToRender.slice(0, MAX_ROWS);
+        try {
+            const tbody = $('#tableBody');
+            const thead = $('#tableHeader');
+            if (!dataToRender || dataToRender.length === 0) {
+                thead.hide();
+                tbody.html(`<tr><td colspan="14" class="no-data-text" style="padding: 20px; text-align: center;">ไม่พบข้อมูลที่ค้นหา</td></tr>`);
+                updateChartsAndKPIs([]);
+                return;
+            }
+            thead.show();
+            
+            const MAX_ROWS = 200; 
+            const limitedData = dataToRender.slice(0, MAX_ROWS);
 
-        let rowsHtml = '';
-        limitedData.forEach((item) => {
-            rowsHtml += `<tr>
-                <td>${formatValue(item.prefix)}</td>
-                <td>${formatValue(item.fname)}</td>
-                <td>${formatValue(item.lname)}</td>
-                <td>${formatValue(item.village)}</td>
-                <td>${formatValue(item.subdistrict)}</td>
-                <td>${formatValue(item.district)}</td>
-                <td>${formatValue(item.province)}</td>
-                <td>${formatValue(item.crop)}</td>
-                <td>${formatValue(item.area)}</td>
-                <td>${formatValue(item.card)}</td>
-                <td>${formatVolunteerStatus(item.v0)}</td>
-                <td>${formatVolunteerStatus(item.v1)}</td>
-                <td>${formatVolunteerStatus(item.v2)}</td>
-                <td>${formatVolunteerStatus(item.v3)}</td>
-            </tr>`;
-        });
-        
-        if (dataToRender.length > MAX_ROWS) {
-            rowsHtml += `<tr><td colspan="14" style="text-align:center; color:#1b4332; font-weight:600; padding:15px; background-color:#e8f5e9;">แสดงผลเพียง ${MAX_ROWS} รายการแรกจากทั้งหมด ${dataToRender.length.toLocaleString()} ราย (กรุณาใช้ตัวกรองเพื่อดูข้อมูลเจาะจง หรือดาวน์โหลด Excel)</td></tr>`;
-        }
-        
-        tbody.html(rowsHtml);
-        updateChartsAndKPIs(dataToRender);
+            let rowsHtml = '';
+            limitedData.forEach((item) => {
+                rowsHtml += `<tr>
+                    <td>${formatValue(item.prefix)}</td>
+                    <td>${formatValue(item.fname)}</td>
+                    <td>${formatValue(item.lname)}</td>
+                    <td>${formatValue(item.village)}</td>
+                    <td>${formatValue(item.subdistrict)}</td>
+                    <td>${formatValue(item.district)}</td>
+                    <td>${formatValue(item.province)}</td>
+                    <td>${formatValue(item.crop)}</td>
+                    <td>${formatValue(item.area)}</td>
+                    <td>${formatValue(item.card)}</td>
+                    <td>${formatVolunteerStatus(item.v0)}</td>
+                    <td>${formatVolunteerStatus(item.v1)}</td>
+                    <td>${formatVolunteerStatus(item.v2)}</td>
+                    <td>${formatVolunteerStatus(item.v3)}</td>
+                </tr>`;
+            });
+            
+            if (dataToRender.length > MAX_ROWS) {
+                rowsHtml += `<tr><td colspan="14" style="text-align:center; color:#1b4332; font-weight:600; padding:15px; background-color:#e8f5e9;">แสดงผลเพียง ${MAX_ROWS} รายการแรกจากทั้งหมด ${dataToRender.length.toLocaleString()} ราย (กรุณาใช้ตัวกรองเพื่อดูข้อมูลเจาะจง หรือดาวน์โหลด Excel)</td></tr>`;
+            }
+            
+            tbody.html(rowsHtml);
+            updateChartsAndKPIs(dataToRender);
+        } catch (error) { console.warn("ตารางมีปัญหา:", error); throw error; }
     }
 
     function filterTableData() {
-        const selectedRegion = $('#filterRegion').val();
+        const selectedSpk = $('#filterSpk').val();
         const selectedProvince = $('#filterProvince').val();
         const searchText = $('#searchName').val().toLowerCase().trim();
         let filtered = allMasterData;
         
         if (filtered.length > 0) {
-            if (selectedRegion !== "" && selectedProvince === "") {
-                const provincesInRegion = regionMapping[selectedRegion];
-                filtered = filtered.filter(item => item && provincesInRegion.includes(item.province));
+            if (selectedSpk !== "" && selectedProvince === "") {
+                const provincesInSpk = spkMapping[selectedSpk];
+                filtered = filtered.filter(item => item && provincesInSpk.includes(item.province));
             } else if (selectedProvince !== "") {
                 filtered = filtered.filter(item => item && item.province === selectedProvince);
             }
@@ -417,14 +488,13 @@
             }
         }
         currentFilteredData = filtered;
-        let regionText = selectedRegion || 'ทุกภูมิภาค';
+        let spkText = selectedSpk ? `สพข.${selectedSpk}` : 'ทุกหน่วยงาน (สพข.)';
         let provText = selectedProvince || 'ทุกจังหวัด';
-        $('#map-subtitle').text(`จำนวนรายชื่อทั้งหมด | ${regionText} | ${provText}`);
+        $('#map-subtitle').text(`จำนวนรายชื่อทั้งหมด | ${spkText} | ${provText}`);
         renderTable(filtered);
         drawMapChart(filtered); 
     }
 
-    // ข้อมูลจาก GAS ทำความสะอาดและ Mapping คีย์มาแล้ว โหลดเข้าตัวแปรตรงๆ ได้เลย ไม่ต้องแปลง
     async function loadDataSafely() {
         const tbody = $('#tableBody');
         try {
@@ -459,15 +529,17 @@
     $(document).ready(function() {
         $('.searchable-dropdown').select2({ width: '100%' });
         const provinceSelect = $('#filterProvince');
-        let allProvinces = [];
-        for (const region in regionMapping) allProvinces = allProvinces.concat(regionMapping[region]);
-        [...new Set(allProvinces)].sort((a,b) => a.localeCompare(b,'th')).forEach(p => provinceSelect.append(new Option(p, p)));
         
-        $('#filterRegion').on('change', function() {
-            const region = $(this).val();
+        let allProvinces = [];
+        for (const spk in spkMapping) allProvinces = allProvinces.concat(spkMapping[spk]);
+        
+        [...new Set(allProvinces)].sort((a,b) => a.localeCompare(b,'th')).forEach(p => provinceSelect.append(new Option('สพด.' + p, p)));
+        
+        $('#filterSpk').on('change', function() {
+            const spk = $(this).val();
             provinceSelect.empty().append(new Option('-- ทุก สพด. (จังหวัด) --', ''));
-            let target = (region && regionMapping[region]) ? regionMapping[region] : allProvinces;
-            [...new Set(target)].sort((a,b) => a.localeCompare(b,'th')).forEach(p => provinceSelect.append(new Option(p, p)));
+            let target = (spk && spkMapping[spk]) ? spkMapping[spk] : allProvinces;
+            [...new Set(target)].sort((a,b) => a.localeCompare(b,'th')).forEach(p => provinceSelect.append(new Option('สพด.' + p, p)));
             filterTableData();
         });
         
@@ -475,9 +547,8 @@
         loadDataSafely();
     });
 
-    function clearFilter() { $('#filterRegion, #filterProvince').val('').trigger('change'); $('#searchName').val(''); filterTableData(); }
+    function clearFilter() { $('#filterSpk, #filterProvince').val('').trigger('change'); $('#searchName').val(''); filterTableData(); }
     
-    // โหลดข้อมูลดิบออกมาเป็นไฟล์ CSV อย่างรวดเร็ว
     function downloadExcel() { 
         if (currentFilteredData.length === 0) return alert("ไม่มีข้อมูลให้ดาวน์โหลด");
         let csv = "\ufeffคำนำหน้า,ชื่อจริง,นามสกุล,หมู่บ้าน,ตำบล,อำเภอ,จังหวัด,พืชที่ปลูก,พื้นที่,บัตรดินดี,มด.หมู่บ้าน,มด.ตำบล,มด.อำเภอ,มด.จังหวัด\n";
